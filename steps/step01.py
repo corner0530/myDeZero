@@ -1,6 +1,11 @@
 # 01. 箱としての変数
 
 class Variable:
+    """変数を表すクラス
+
+    Attributes:
+        data (ndarray): 変数の中身
+    """
     def __init__(self, data):
         self.data = data
 
