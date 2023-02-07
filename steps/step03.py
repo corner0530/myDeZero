@@ -1,23 +1,8 @@
 # 03. 関数の連結
 import numpy as np
-from step01 import Variable
-from step02 import Function, Square
+from common import Exp, Square, Variable
 
-
-class Exp(Function):
-    """指数関数を計算する関数
-
-    Args:
-        input (Variable): 入力
-
-    Returns:
-        Variable: 指数関数を適用した出力
-    """
-    def forward(self, x):
-        return np.exp(x)
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     A = Square()
     B = Exp()
     C = Square()

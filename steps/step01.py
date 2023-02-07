@@ -1,15 +1,7 @@
 # 01. 箱としての変数
+from common import Variable
 
-class Variable:
-    """変数を表すクラス
-
-    Attributes:
-        data (ndarray): 変数の中身
-    """
-    def __init__(self, data):
-        self.data = data
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     import numpy as np
 
     data = np.array(1.0)  # データ
