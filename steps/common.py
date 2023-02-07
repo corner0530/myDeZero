@@ -9,6 +9,7 @@ class Variable:
     Attributes:
         data (ndarray): 変数の中身
         grad (ndarray): 微分値
+        creator (Function): どの関数によって生成されたか
     """
 
     def __init__(self, data):
@@ -19,6 +20,22 @@ class Variable:
         """
         self.data = data
         self.grad = None  # 微分値を保持する変数
+        self.creator = None  # どの関数によって生成されたかを保持する変数
+
+    def set_creator(self, func):
+        """どの関数によって生成されたかを保持する
+
+        Args:
+            func (Function): どの関数によって生成されたか
+        """
+        self.creator = func
+
+    def backward(self):
+        f = self.creator  # 1. 関数を取得
+        if f is not None:
+            x = f.input  # 2. 関数の入力を取得
+            x.grad = f.backward(self.grad)  # 3. 関数のbackwardメソッドを呼ぶ
+            x.backward()  # 自分より1つ前の変数のbackwardメソッドを呼ぶ（再帰）
 
 
 class Function:
@@ -26,6 +43,7 @@ class Function:
 
     Attributes:
         input (Variable): 入力
+        output (Variable): 出力
     """
 
     def __call__(self, input):  # 引数を与えられるとこのメソッドが呼び出される
@@ -40,7 +58,9 @@ class Function:
         x = input.data  # データを取り出す
         y = self.forward(x)  # 具体的な計算を呼び出す
         output = Variable(y)  # Variableとして返す
+        output.set_creator(self)  # 出力変数に生みの親を覚えさせる
         self.input = input  # backwardのために入力を覚えておく
+        self.output = output  # 出力も覚える
         return output
 
     def forward(self, x):
