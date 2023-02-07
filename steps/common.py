@@ -31,6 +31,13 @@ class Variable:
         self.creator = func
 
     def backward(self):
+        """微分を計算する
+
+        1. 関数を取得
+        2. 関数の入力を取得
+        3. 関数のbackwardメソッドを呼ぶ
+        4. 自分より1つ前の変数のbackwardメソッドを呼ぶ（再帰）
+        """
         f = self.creator  # 1. 関数を取得
         if f is not None:
             x = f.input  # 2. 関数の入力を取得
