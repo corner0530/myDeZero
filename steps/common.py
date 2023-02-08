@@ -31,18 +31,15 @@ class Variable:
         self.creator = func
 
     def backward(self):
-        """微分を計算する
+        """微分を計算する"""
+        funcs = [self.creator]  # 処理すべき関数をここに順に追加する
+        while funcs:
+            f = funcs.pop()  # 関数(リストの末尾にある)を取得
+            x, y = f.input, f.output  # 関数の入出力を取得
+            x.grad = f.backward(y.grad)  # backwardメソッドを呼ぶ
 
-        1. 関数を取得
-        2. 関数の入力を取得
-        3. 関数のbackwardメソッドを呼ぶ
-        4. 自分より1つ前の変数のbackwardメソッドを呼ぶ（再帰）
-        """
-        f = self.creator  # 1. 関数を取得
-        if f is not None:
-            x = f.input  # 2. 関数の入力を取得
-            x.grad = f.backward(self.grad)  # 3. 関数のbackwardメソッドを呼ぶ
-            x.backward()  # 自分より1つ前の変数のbackwardメソッドを呼ぶ（再帰）
+            if x.creator is not None:
+                funcs.append(x.creator)  # 1つ前の関数をリストに追加
 
 
 class Function:
