@@ -18,6 +18,10 @@ class Variable:
         Args:
             data (ndarray): 変数の中身
         """
+        if data is not None:
+            if not isinstance(data, np.ndarray):
+                raise TypeError("{} is not supported".format(type(data)))
+
         self.data = data
         self.grad = None  # 微分値を保持する変数
         self.creator = None  # どの関数によって生成されたかを保持する変数
@@ -32,6 +36,9 @@ class Variable:
 
     def backward(self):
         """微分を計算する"""
+        if self.grad is None:  # 逆伝播の初期値を設定
+            self.grad = np.ones_like(self.data)
+
         funcs = [self.creator]  # 処理すべき関数をここに順に追加する
         while funcs:
             f = funcs.pop()  # 関数(リストの末尾にある)を取得
@@ -40,6 +47,20 @@ class Variable:
 
             if x.creator is not None:
                 funcs.append(x.creator)  # 1つ前の関数をリストに追加
+
+
+def as_array(x):
+    """ndarrayに変換する関数
+
+    Args:
+        x (ndarray or scalar): 変換する値
+
+    Returns:
+        ndarray: 変換された値
+    """
+    if np.isscalar(x):
+        return np.array(x)
+    return x
 
 
 class Function:
@@ -61,7 +82,7 @@ class Function:
         """
         x = input.data  # データを取り出す
         y = self.forward(x)  # 具体的な計算を呼び出す
-        output = Variable(y)  # Variableとして返す
+        output = Variable(as_array(y))  # Variableとして返す
         output.set_creator(self)  # 出力変数に生みの親を覚えさせる
         self.input = input  # backwardのために入力を覚えておく
         self.output = output  # 出力も覚える
@@ -177,3 +198,27 @@ def numerical_diff(f, x, eps=1e-4):
     y0 = f(x0)
     y1 = f(x1)
     return (y1.data - y0.data) / (2 * eps)
+
+
+def square(x):
+    """2乗を計算する関数
+
+    Args:
+        x (Variable): 入力
+
+    Returns:
+        Variable: 2乗を適用した出力
+    """
+    return Square()(x)
+
+
+def exp(x):
+    """指数関数を計算する関数
+
+    Args:
+        x (Variable): 入力
+
+    Returns:
+        Variable: 指数関数を適用した出力
+    """
+    return Exp()(x)
