@@ -150,6 +150,18 @@ class Square(Function):
         return gx
 
 
+def square(x):
+    """2乗を計算する関数
+
+    Args:
+        x (Variable): 入力
+
+    Returns:
+        Variable: 2乗を適用した出力
+    """
+    return Square()(x)
+
+
 class Exp(Function):
     """指数関数を計算する関数を表すクラス
 
@@ -182,6 +194,18 @@ class Exp(Function):
         return gx
 
 
+def exp(x):
+    """指数関数を計算する関数
+
+    Args:
+        x (Variable): 入力
+
+    Returns:
+        Variable: 指数関数を適用した出力
+    """
+    return Exp()(x)
+
+
 def numerical_diff(f, x, eps=1e-4):
     """数値微分を行う関数
 
@@ -198,27 +222,3 @@ def numerical_diff(f, x, eps=1e-4):
     y0 = f(x0)
     y1 = f(x1)
     return (y1.data - y0.data) / (2 * eps)
-
-
-def square(x):
-    """2乗を計算する関数
-
-    Args:
-        x (Variable): 入力
-
-    Returns:
-        Variable: 2乗を適用した出力
-    """
-    return Square()(x)
-
-
-def exp(x):
-    """指数関数を計算する関数
-
-    Args:
-        x (Variable): 入力
-
-    Returns:
-        Variable: 指数関数を適用した出力
-    """
-    return Exp()(x)
