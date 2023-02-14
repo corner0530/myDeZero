@@ -21,4 +21,3 @@ jobs:
 
       - name: unittest
         run: python -m unittest discover tests
-        continue-on-error: true
