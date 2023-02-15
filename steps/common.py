@@ -71,7 +71,7 @@ class Function:
         outputs (list): 出力
     """
 
-    def __call__(self, inputs):
+    def __call__(self, *inputs):  # *により可変長引数を受け取れる
         """関数を呼び出したときの処理
 
         Args:
@@ -81,14 +81,17 @@ class Function:
             list: 出力
         """
         xs = [x.data for x in inputs]
-        ys = self.forward(xs)
+        ys = self.forward(*xs)  # *によりリストをアンパックして渡す
+        if not isinstance(ys, tuple):  # tupleでない場合はtupleに変換
+            ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
         self.outputs = outputs
-        return outputs
+
+        return outputs if len(outputs) > 1 else outputs[0]  # リストの要素が1つのときは最初の要素だけを返す
 
     def forward(self, xs):
         """具体的な計算を行う
@@ -227,7 +230,10 @@ def numerical_diff(f, x, eps=1e-4):
 
 
 class Add(Function):
-    def forward(self, xs):
-        x0, x1 = xs
+    def forward(self, x0, x1):
         y = x0 + x1
-        return (y,)
+        return y
+
+
+def add(x0, x1):
+    return Add()(x0, x1)
