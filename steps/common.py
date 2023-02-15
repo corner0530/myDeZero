@@ -67,49 +67,51 @@ class Function:
     """関数を表すクラス
 
     Attributes:
-        input (Variable): 入力
-        output (Variable): 出力
+        inputs (list): 入力
+        outputs (list): 出力
     """
 
-    def __call__(self, input):  # 引数を与えられるとこのメソッドが呼び出される
+    def __call__(self, inputs):
         """関数を呼び出したときの処理
 
         Args:
-            input (Variable): 入力
+            inputs (list): 入力
 
         Returns:
-            Variable: 関数を適用した出力
+            list: 出力
         """
-        x = input.data  # データを取り出す
-        y = self.forward(x)  # 具体的な計算を呼び出す
-        output = Variable(as_array(y))  # Variableとして返す
-        output.set_creator(self)  # 出力変数に生みの親を覚えさせる
-        self.input = input  # backwardのために入力を覚えておく
-        self.output = output  # 出力も覚える
-        return output
+        xs = [x.data for x in inputs]
+        ys = self.forward(xs)
+        outputs = [Variable(as_array(y)) for y in ys]
 
-    def forward(self, x):
+        for output in outputs:
+            output.set_creator(self)
+        self.inputs = inputs
+        self.outputs = outputs
+        return outputs
+
+    def forward(self, xs):
         """具体的な計算を行う
 
         Args:
-            x (ndarray): 入力
+            xs (list): 入力
 
         Returns:
-            ndarray: 関数を適用した出力
+            list: 関数を適用した出力
 
         Raises:
             NotImplementedError: 実装されていない場合
         """
         raise NotImplementedError()
 
-    def backward(self, gy):
+    def backward(self, gys):
         """微分を計算する
 
         Args:
-            gy (ndarray): 出力に対する微分値
+            gys (list): 出力に対する微分値
 
         Returns:
-            ndarray: 入力に対する微分値
+            list: 入力に対する微分値
 
         Raises:
             NotImplementedError: 実装されていない場合
@@ -222,3 +224,10 @@ def numerical_diff(f, x, eps=1e-4):
     y0 = f(x0)
     y1 = f(x1)
     return (y1.data - y0.data) / (2 * eps)
+
+
+class Add(Function):
+    def forward(self, xs):
+        x0, x1 = xs
+        y = x0 + x1
+        return (y,)
