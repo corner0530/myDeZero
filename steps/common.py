@@ -42,11 +42,16 @@ class Variable:
         funcs = [self.creator]  # 処理すべき関数をここに順に追加する
         while funcs:
             f = funcs.pop()  # 関数(リストの末尾にある)を取得
-            x, y = f.input, f.output  # 関数の入出力を取得
-            x.grad = f.backward(y.grad)  # backwardメソッドを呼ぶ
+            gys = [output.grad for output in f.outputs]  # 出力に対する微分をリストにまとめる
+            gxs = f.backward(*gys)  # fの逆伝播
+            if not isinstance(gxs, tuple):  # tupleでない場合はtupleに変換
+                gxs = (gxs,)
 
-            if x.creator is not None:
-                funcs.append(x.creator)  # 1つ前の関数をリストに追加
+            for x, gx in zip(f.inputs, gxs):  # gxsとf.inputsは各要素が対応しているのでぺアで処理する
+                x.grad = gx
+
+                if x.creator is not None:
+                    funcs.append(x.creator)
 
 
 def as_array(x):
@@ -150,7 +155,7 @@ class Square(Function):
         Returns:
             ndarray: 入力に対する微分値
         """
-        x = self.input.data
+        x = self.inputs[0].data
         gx = 2 * x * gy
         return gx
 
@@ -194,7 +199,7 @@ class Exp(Function):
         Returns:
             ndarray: 入力に対する微分値
         """
-        x = self.input.data
+        x = self.inputs[0].data
         gx = np.exp(x) * gy
         return gx
 
@@ -233,6 +238,9 @@ class Add(Function):
     def forward(self, x0, x1):
         y = x0 + x1
         return y
+
+    def backward(self, gy):
+        return gy, gy
 
 
 def add(x0, x1):
