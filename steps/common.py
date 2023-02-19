@@ -25,6 +25,7 @@ class Variable:
         self.data = data
         self.grad = None  # 微分値を保持する変数
         self.creator = None  # どの関数によって生成されたかを保持する変数
+        self.generation = 0  # どの世代の変数かを保持する変数
 
     def set_creator(self, func):
         """どの関数によって生成されたかを保持する
@@ -33,13 +34,29 @@ class Variable:
             func (Function): どの関数によって生成されたか
         """
         self.creator = func
+        self.generation = func.generation + 1
 
     def backward(self):
         """微分を計算する"""
         if self.grad is None:  # 逆伝播の初期値を設定
             self.grad = np.ones_like(self.data)
 
-        funcs = [self.creator]  # 処理すべき関数をここに順に追加する
+        funcs = []  # 処理すべき関数の候補
+        seen_set = set()
+
+        def add_func(f):
+            """関数をfuncsに追加する
+
+            Args:
+                f (Function): 追加する関数
+            """
+            if f not in seen_set:
+                funcs.append(f)
+                seen_set.add(f)
+                funcs.sort(key=lambda x: x.generation)
+
+        add_func(self.creator)
+
         while funcs:
             f = funcs.pop()  # 関数(リストの末尾にある)を取得
             gys = [output.grad for output in f.outputs]  # 出力に対する微分をリストにまとめる
@@ -54,7 +71,7 @@ class Variable:
                     x.grad = x.grad + gx
 
                 if x.creator is not None:
-                    funcs.append(x.creator)
+                    add_func(x.creator)
 
     def cleargrad(self):
         self.grad = None
@@ -97,6 +114,7 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
+        self.generation = max([input.generation for input in inputs])
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
