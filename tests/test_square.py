@@ -1,6 +1,9 @@
+import sys
+
 import numpy as np
 import pytest
 
+sys.path.append(".")
 from steps.step00 import Variable, numerical_diff, square
 
 
