@@ -2,7 +2,7 @@
 import unittest
 
 import numpy as np
-from common import Variable, numerical_diff, square
+from step00 import Variable, numerical_diff, square
 
 
 class SquareTest(unittest.TestCase):

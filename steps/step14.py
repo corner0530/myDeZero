@@ -1,6 +1,6 @@
 # 14. 同じ変数を繰り返し使う
 import numpy as np
-from common import Variable, add
+from step00 import Variable, add
 
 if __name__ == "__main__":
     x = Variable(np.array(3.0))

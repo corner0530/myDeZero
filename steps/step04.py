@@ -1,6 +1,6 @@
 # 04. 数値微分
 import numpy as np
-from common import Exp, Square, Variable, numerical_diff
+from step00 import Exp, Square, Variable, numerical_diff
 
 if __name__ == "__main__":
     f = Square()

@@ -1,6 +1,6 @@
 # 09. 関数をより便利に
 import numpy as np
-from common import Variable, exp, square
+from step00 import Variable, exp, square
 
 if __name__ == "__main__":
     x = Variable(np.array(0.5))

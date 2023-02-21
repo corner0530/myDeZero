@@ -1,10 +1,7 @@
-import sys
+import numpy as np
 import pytest
 
-sys.path.append(".")
-import numpy as np
-
-from steps.common import Variable, numerical_diff, square
+from steps.step00 import Variable, numerical_diff, square
 
 
 def test_forward():
@@ -13,12 +10,14 @@ def test_forward():
     expected = np.array(4.0)
     assert y.data == expected  # 期待した値と出力が一致するか検証
 
+
 def test_backward():
     x = Variable(np.array(3.0))
     y = square(x)
     y.backward()
     expected = np.array(6.0)
     assert x.grad == expected
+
 
 def test_gradient_check():
     x = Variable(np.random.rand(1))  # ランダムな入力値を生成

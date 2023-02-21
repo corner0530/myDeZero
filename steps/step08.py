@@ -1,6 +1,6 @@
 # 08. 再帰からループへ
 import numpy as np
-from common import Exp, Square, Variable
+from step00 import Exp, Square, Variable
 
 if __name__ == "__main__":
     A = Square()
