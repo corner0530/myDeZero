@@ -1,5 +1,7 @@
 # coding: utf-8
 """共通の関数やクラスを定義するモジュール"""
+import weakref
+
 import numpy as np
 
 
@@ -59,7 +61,7 @@ class Variable:
 
         while funcs:
             f = funcs.pop()  # 関数(リストの末尾にある)を取得
-            gys = [output.grad for output in f.outputs]  # 出力に対する微分をリストにまとめる
+            gys = [output().grad for output in f.outputs]  # 出力(のサイン商)に対する微分をリストにまとめる
             gxs = f.backward(*gys)  # fの逆伝播
             if not isinstance(gxs, tuple):  # tupleでない場合はtupleに変換
                 gxs = (gxs,)
@@ -118,7 +120,7 @@ class Function:
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
-        self.outputs = outputs
+        self.outputs = [weakref.ref(output) for output in outputs]  # 弱参照を作ることで循環参照を避ける
 
         return outputs if len(outputs) > 1 else outputs[0]  # リストの要素が1つのときは最初の要素だけを返す
 
