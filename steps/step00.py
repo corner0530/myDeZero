@@ -1,5 +1,6 @@
 # coding: utf-8
 """共通の関数やクラスを定義するモジュール"""
+import contextlib
 import weakref
 
 import numpy as np
@@ -38,8 +39,12 @@ class Variable:
         self.creator = func
         self.generation = func.generation + 1
 
-    def backward(self):
-        """微分を計算する"""
+    def backward(self, retain_grad=False):
+        """微分を計算する
+
+        Args:
+            retain_grad (bool, optional): 微分値を保持するかどうか
+        """
         if self.grad is None:  # 逆伝播の初期値を設定
             self.grad = np.ones_like(self.data)
 
@@ -74,6 +79,10 @@ class Variable:
 
                 if x.creator is not None:
                     add_func(x.creator)
+
+            if not retain_grad:
+                for y in f.outputs:
+                    y().grad = None  # 途中の変数の微分を削除
 
     def cleargrad(self):
         self.grad = None
@@ -116,11 +125,14 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
-        self.generation = max([input.generation for input in inputs])
-        for output in outputs:
-            output.set_creator(self)
-        self.inputs = inputs
-        self.outputs = [weakref.ref(output) for output in outputs]  # 弱参照を作ることで循環参照を避ける
+        if Config.enable_backprop:
+            self.generation = max([input.generation for input in inputs])  # 世代の設定
+            for output in outputs:
+                output.set_creator(self)  # つながりの設定
+            self.inputs = inputs
+            self.outputs = [
+                weakref.ref(output) for output in outputs
+            ]  # 弱参照を作ることで循環参照を避ける
 
         return outputs if len(outputs) > 1 else outputs[0]  # リストの要素が1つのときは最初の要素だけを返す
 
@@ -261,13 +273,81 @@ def numerical_diff(f, x, eps=1e-4):
 
 
 class Add(Function):
+    """加算を行う関数を表すクラス
+
+    Attributes:
+        input (Variable): 入力
+    """
+
     def forward(self, x0, x1):
+        """加算を行う
+
+        Args:
+            x0 (ndarray): 入力
+            x1 (ndarray): 入力
+
+        Returns:
+            ndarray: 加算を適用した出力
+        """
         y = x0 + x1
         return y
 
     def backward(self, gy):
+        """微分を計算する
+
+        Args:
+            gy (ndarray): 出力に対する微分値
+
+        Returns:
+            ndarray: 入力x0に対する微分値,
+            ndarray: 入力x1に対する微分値
+        """
         return gy, gy
 
 
 def add(x0, x1):
+    """加算を行う関数
+
+    Args:
+        x0 (Variable): 入力
+        x1 (Variable): 入力
+
+    Returns:
+        Variable: 加算を適用した出力
+    """
     return Add()(x0, x1)
+
+
+class Config:
+    """設定を管理するクラス
+
+    Attributes:
+        enable_backprop (bool): 逆伝播を行うかどうか
+    """
+
+    enable_backprop = True
+
+
+@contextlib.contextmanager  # コンテキストマネージャを作成するデコレータ
+def using_config(name, value):
+    """設定を変更するコンテキストマネージャ
+
+    Args:
+        name (str): 設定名
+        value (bool): 設定値
+    """
+    old_value = getattr(Config, name)
+    setattr(Config, name, value)  # 前処理として設定を変更
+    try:
+        yield  # 例外が発生するとここにも送られる
+    finally:
+        setattr(Config, name, old_value)  # 後処理として設定を元に戻す
+
+
+def no_grad():
+    """逆伝播を行わないコンテキストマネージャ
+
+    Returns:
+        contextlib._GeneratorContextManager: コンテキストマネージャ
+    """
+    return using_config('enable_backprop', False)
